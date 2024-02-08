@@ -15,3 +15,23 @@ document.getElementById('registerButton').addEventListener('click', async () => 
         console.error(err);
     }
 });
+
+async function startRegistration() {
+    // Fetch options from server
+    const response = await fetch('/webauthn/register/start', { method: 'POST' });
+    const options = await response.json();
+
+    // Adjust options to match the expected format, if necessary
+
+    // Call navigator.credentials.create() with those options
+    const credential = await navigator.credentials.create({ publicKey: options });
+
+    // Send the credential to the server for verification
+    await fetch('/webauthn/register/finish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credential),
+    });
+
+    // Handle server response
+}

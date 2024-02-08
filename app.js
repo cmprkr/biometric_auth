@@ -8,6 +8,16 @@ const app = express();
 const port = 3000;
 const users = {}; // This will act as a simple in-memory "database"
 
+const { generateAuthenticationOptions, verifyAuthenticationResponse, generateRegistrationOptions, verifyRegistrationResponse } = require('@simplewebauthn/server');
+
+// Import this if not already done
+app.use(bodyParser.json());
+
+// Example in-memory storage for demo purposes
+const userStorage = {};
+
+app.use(express.static('public')); // Make sure this is already in your app.js
+
 // Middleware to parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -68,3 +78,81 @@ function writeUsers(users) {
         console.error('Error writing users file:', err);
     }
 }
+
+app.post('/webauthn/register/start', (req, res) => {
+    const options = generateRegistrationOptions({
+        rpName: "Example Corp", // Replace with your site's name
+        userID: "YOUR_USER_ID", // Replace with the current user's ID
+        userName: "YOUR_USER_NAME", // Replace with the current user's username
+        // Include other options as needed
+    });
+
+    // Store options in session or a temporary storage to retrieve them later
+    // For simplicity, storing in an in-memory object
+    userStorage.tempChallenge = options.challenge;
+
+    res.json(options);
+});
+
+app.post('/webauthn/register/finish', (req, res) => {
+    const { challenge } = userStorage.tempChallenge;
+    const credential = req.body;
+
+    // Perform necessary conversions for types, not shown here for brevity
+
+    try {
+        const verification = verifyRegistrationResponse({
+            credential,
+            expectedChallenge: challenge,
+            expectedOrigin: "http://localhost:3000", // Adjust for production
+            expectedRPID: "localhost",
+        });
+
+        if (verification.verified) {
+            // Save registration details to userStorage or your database
+            res.json({ success: true });
+        } else {
+            res.json({ success: false, message: "Verification failed" });
+        }
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+app.post('/webauthn/login/start', (req, res) => {
+    const options = generateAuthenticationOptions({
+        // Adjust options as needed
+        allowCredentials: [{
+            id: userStorage.savedCredentialID, // Retrieve this from where you stored it during registration
+            type: 'public-key',
+            transports: ['internal'],
+        }],
+    });
+
+    userStorage.tempChallenge = options.challenge;
+
+    res.json(options);
+});
+
+app.post('/webauthn/login/finish', (req, res) => {
+    const { challenge } = userStorage.tempChallenge;
+    const credential = req.body;
+
+    try {
+        const verification = verifyAuthenticationResponse({
+            credential,
+            expectedChallenge: challenge,
+            expectedOrigin: "http://localhost:3000",
+            expectedRPID: "localhost",
+            authenticator: userStorage.authenticatorData, // Use the authenticator data saved during registration
+        });
+
+        if (verification.verified) {
+            res.json({ success: true });
+        } else {
+            res.json({ success: false, message: "Authentication failed" });
+        }
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});

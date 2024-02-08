@@ -5,6 +5,19 @@
     <title>Sign Up</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
+<script>
+async function register() {
+    try {
+        const publicKeyCredentialCreationOptions = {/* PublicKeyCredentialCreationOptions from server */};
+        // Call navigator.credentials.create() here with the options
+        // Send the response back to your server to register the user
+    } catch (err) {
+        console.error(err);
+    }
+    return false; // Prevent form submission for demonstration
+}
+document.querySelector('form').onsubmit = register;
+</script>
 <body>
     <h2>Sign Up</h2>
     <form action="/signup" method="post">

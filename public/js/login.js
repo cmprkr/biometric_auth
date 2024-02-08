@@ -1,17 +1,19 @@
-document.getElementById('loginButton').addEventListener('click', async () => {
-    try {
-        const publicKeyCredentialRequestOptions = {
-            // WebAuthn public key request options go here
-            // This should include challenge, allowCredentials, etc.
-        };
+async function startLogin() {
+    // Fetch options from server
+    const response = await fetch('/webauthn/login/start', { method: 'POST' });
+    const options = await response.json();
 
-        const assertion = await navigator.credentials.get({
-            publicKey: publicKeyCredentialRequestOptions
-        });
+    // Adjust options to match the expected format, if necessary
 
-        // Convert assertion into a format that can be sent to the server
-        // Send the assertion to the server for verification
-    } catch (err) {
-        console.error(err);
-    }
-});
+    // Call navigator.credentials.get() with those options
+    const assertion = await navigator.credentials.get({ publicKey: options });
+
+    // Send the assertion to the server for verification
+    await fetch('/webauthn/login/finish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(assertion),
+    });
+
+    // Handle server response
+}

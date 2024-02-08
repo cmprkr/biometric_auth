@@ -5,6 +5,19 @@
     <title>Login</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
+<script>
+async function login() {
+    try {
+        const publicKeyCredentialRequestOptions = {/* PublicKeyCredentialRequestOptions from server */};
+        // Call navigator.credentials.get() here
+        // Send the response to your server for verification
+    } catch (err) {
+        console.error(err);
+    }
+    return false; // Prevent form submission for demonstration
+}
+document.querySelector('form').onsubmit = login;
+</script>
 <body>
     <h2>Login</h2>
     <form action="/login" method="post">
